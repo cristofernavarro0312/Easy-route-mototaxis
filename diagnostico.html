@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Route - Diagnóstico</title>
+</head>
+<body style="font-family: Arial; padding: 40px; background: #f5f5f5;">
+    <div style="max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+        <h1 style="color: #667eea;">🛵 Easy Route - Diagnóstico</h1>
+        
+        <div id="status" style="margin: 20px 0; padding: 20px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
+            <h3>⏳ Verificando archivos...</h3>
+            <p>Espera un momento...</p>
+        </div>
+        
+        <div id="details" style="margin-top: 20px; font-family: monospace; font-size: 12px; background: #f8f9fa; padding: 15px; border-radius: 5px; max-height: 400px; overflow-y: auto;"></div>
+    </div>
+    
+    <script>
+        const log = [];
+        const detailsDiv = document.getElementById('details');
+        const statusDiv = document.getElementById('status');
+        
+        function addLog(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#667eea';
+            log.push(`[${timestamp}] ${msg}`);
+            detailsDiv.innerHTML += `<div style="color: ${color}; margin: 5px 0;">${msg}</div>`;
+            console.log(msg);
+        }
+        
+        async function verificarTodo() {
+            addLog('🔍 Iniciando verificación...', 'info');
+            
+            // Test 1: Verificar que Leaflet se cargó
+            addLog('📦 Verificando Leaflet...', 'info');
+            if (typeof L !== 'undefined') {
+                addLog('✅ Leaflet cargado correctamente', 'success');
+            } else {
+                addLog('❌ ERROR: Leaflet no se cargó', 'error');
+            }
+            
+            // Test 2: Intentar cargar grafo_web.json
+            addLog('📂 Intentando cargar grafo_web.json...', 'info');
+            
+            try {
+                const response = await fetch('grafo_web.json');
+                addLog(`📡 Respuesta del servidor: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                addLog(`📄 Content-Type: ${contentType}`, 'info');
+                
+                const data = await response.json();
+                addLog(`✅ JSON parseado correctamente`, 'success');
+                addLog(`📊 Nodos encontrados: ${Object.keys(data.nodos || {}).length}`, 'success');
+                addLog(`📊 Grafos encontrados: ${Object.keys(data.grafo || {}).length}`, 'success');
+                
+                // Mostrar algunos nodos
+                const nodos = Object.keys(data.nodos || {});
+                if (nodos.length > 0) {
+                    addLog(`📍 Primeros 5 nodos: ${nodos.slice(0, 5).join(', ')}`, 'info');
+                }
+                
+                statusDiv.innerHTML = `
+                    <h3 style="color: #28a745;">✅ TODO FUNCIONANDO</h3>
+                    <p>El archivo grafo_web.json se cargó correctamente.</p>
+                    <p><strong>Solución:</strong> Hay un problema con el código del mapa. Te daré una versión corregida.</p>
+                `;
+                
+            } catch (error) {
+                addLog(`❌ ERROR: ${error.message}`, 'error');
+                
+                statusDiv.innerHTML = `
+                    <h3 style="color: #dc3545;">❌ ARCHIVO NO ENCONTRADO</h3>
+                    <p><strong>Problema:</strong> El archivo grafo_web.json NO está en el repositorio de GitHub.</p>
+                    <p><strong>Solución:</strong></p>
+                    <ol style="text-align: left; padding-left: 20px;">
+                        <li>Ve a tu repositorio en GitHub</li>
+                        <li>Click en "Add file" → "Upload files"</li>
+                        <li>Arrastra el archivo grafo_web.json desde tu computadora</li>
+                        <li>Click en "Commit changes"</li>
+                        <li>Espera 2-3 minutos y refresca esta página</li>
+                    </ol>
+                `;
+            }
+            
+            // Test 3: Verificar URLs
+            addLog('🌐 URLs actuales:', 'info');
+            addLog(`   Página: ${window.location.href}`, 'info');
+            addLog(`   JSON: ${window.location.origin}${window.location.pathname.replace('index.html', '')}grafo_web.json`, 'info');
+        }
+        
+        // Cargar Leaflet primero
+        const leafletCSS = document.createElement('link');
+        leafletCSS.rel = 'stylesheet';
+        leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(leafletCSS);
+        
+        const leafletJS = document.createElement('script');
+        leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        leafletJS.onload = verificarTodo;
+        document.head.appendChild(leafletJS);
+    </script>
+</body>
+</html>
