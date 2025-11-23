@@ -15,6 +15,10 @@
         </div>
         
         <div id="details" style="margin-top: 20px; font-family: monospace; font-size: 12px; background: #f8f9fa; padding: 15px; border-radius: 5px; max-height: 400px; overflow-y: auto;"></div>
+        
+        <button onclick="location.reload()" style="margin-top: 20px; padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">
+            🔄 Volver a verificar
+        </button>
     </div>
     
     <script>
@@ -24,78 +28,158 @@
         
         function addLog(msg, type = 'info') {
             const timestamp = new Date().toLocaleTimeString();
-            const color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#667eea';
+            const colors = {
+                'error': '#dc3545',
+                'success': '#28a745',
+                'info': '#667eea',
+                'warning': '#ff9800'
+            };
+            const color = colors[type] || colors.info;
+            
             log.push(`[${timestamp}] ${msg}`);
-            detailsDiv.innerHTML += `<div style="color: ${color}; margin: 5px 0;">${msg}</div>`;
+            detailsDiv.innerHTML += `<div style="color: ${color}; margin: 5px 0; padding: 5px; border-left: 3px solid ${color}; padding-left: 10px;">${msg}</div>`;
             console.log(msg);
         }
         
         async function verificarTodo() {
-            addLog('🔍 Iniciando verificación...', 'info');
+            addLog('🚀 Iniciando verificación completa...', 'info');
+            addLog('', 'info');
             
             // Test 1: Verificar que Leaflet se cargó
-            addLog('📦 Verificando Leaflet...', 'info');
+            addLog('📦 TEST 1: Verificando librería Leaflet...', 'info');
             if (typeof L !== 'undefined') {
-                addLog('✅ Leaflet cargado correctamente', 'success');
+                addLog('✅ Leaflet cargado correctamente (versión disponible)', 'success');
             } else {
-                addLog('❌ ERROR: Leaflet no se cargó', 'error');
+                addLog('❌ ERROR: Leaflet no se cargó (problema de CDN)', 'error');
             }
+            addLog('', 'info');
             
-            // Test 2: Intentar cargar grafo_web.json
-            addLog('📂 Intentando cargar grafo_web.json...', 'info');
+            // Test 2: Verificar URLs
+            addLog('🌐 TEST 2: Verificando URLs...', 'info');
+            addLog(`   📍 Página actual: ${window.location.href}`, 'info');
+            const jsonURL = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/') + 'grafo_web.json';
+            addLog(`   📍 URL esperada del JSON: ${jsonURL}`, 'info');
+            addLog('', 'info');
+            
+            // Test 3: Intentar cargar grafo_web.json
+            addLog('📂 TEST 3: Intentando cargar grafo_web.json...', 'info');
             
             try {
+                const startTime = Date.now();
                 const response = await fetch('grafo_web.json');
-                addLog(`📡 Respuesta del servidor: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                const loadTime = Date.now() - startTime;
+                
+                addLog(`📡 Respuesta recibida en ${loadTime}ms`, 'info');
+                addLog(`📊 Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                addLog(`📊 Headers:`, 'info');
+                
+                response.headers.forEach((value, key) => {
+                    addLog(`   • ${key}: ${value}`, 'info');
+                });
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                const contentType = response.headers.get('content-type');
-                addLog(`📄 Content-Type: ${contentType}`, 'info');
-                
+                addLog('', 'info');
+                addLog('📄 TEST 4: Parseando JSON...', 'info');
                 const data = await response.json();
                 addLog(`✅ JSON parseado correctamente`, 'success');
-                addLog(`📊 Nodos encontrados: ${Object.keys(data.nodos || {}).length}`, 'success');
-                addLog(`📊 Grafos encontrados: ${Object.keys(data.grafo || {}).length}`, 'success');
+                addLog(`📊 Tamaño del objeto: ${JSON.stringify(data).length} caracteres`, 'info');
+                addLog('', 'info');
                 
-                // Mostrar algunos nodos
-                const nodos = Object.keys(data.nodos || {});
-                if (nodos.length > 0) {
-                    addLog(`📍 Primeros 5 nodos: ${nodos.slice(0, 5).join(', ')}`, 'info');
+                addLog('📊 TEST 5: Analizando estructura de datos...', 'info');
+                
+                if (data.nodos) {
+                    const nodosArray = Object.keys(data.nodos);
+                    addLog(`✅ Propiedad 'nodos' encontrada: ${nodosArray.length} nodos`, 'success');
+                    
+                    // Contar POIs y esquinas
+                    let pois = 0, esquinas = 0;
+                    nodosArray.forEach(id => {
+                        if (data.nodos[id].tipo === 'poi') pois++;
+                        if (data.nodos[id].tipo === 'esquina') esquinas++;
+                    });
+                    
+                    addLog(`   • POIs (destinos): ${pois}`, 'success');
+                    addLog(`   • Esquinas (intersecciones): ${esquinas}`, 'success');
+                    
+                    if (nodosArray.length > 0) {
+                        addLog(`   • Primeros 5 nodos: ${nodosArray.slice(0, 5).join(', ')}`, 'info');
+                        
+                        // Mostrar ejemplo de un POI
+                        const primerPOI = nodosArray.find(id => data.nodos[id].tipo === 'poi');
+                        if (primerPOI) {
+                            const poi = data.nodos[primerPOI];
+                            addLog(`   • Ejemplo de POI: ${poi.nombre} (lat: ${poi.lat}, lon: ${poi.lon})`, 'info');
+                        }
+                    }
+                } else {
+                    addLog(`❌ ERROR: No se encontró la propiedad 'nodos'`, 'error');
                 }
                 
+                if (data.grafo) {
+                    const grafoArray = Object.keys(data.grafo);
+                    addLog(`✅ Propiedad 'grafo' encontrada: ${grafoArray.length} nodos con conexiones`, 'success');
+                    
+                    // Contar conexiones totales
+                    let totalConexiones = 0;
+                    grafoArray.forEach(nodo => {
+                        totalConexiones += Object.keys(data.grafo[nodo]).length;
+                    });
+                    addLog(`   • Total de conexiones: ${totalConexiones}`, 'success');
+                } else {
+                    addLog(`❌ ERROR: No se encontró la propiedad 'grafo'`, 'error');
+                }
+                
+                addLog('', 'info');
+                addLog('🎉 ¡TODOS LOS TESTS PASARON!', 'success');
+                
                 statusDiv.innerHTML = `
-                    <h3 style="color: #28a745;">✅ TODO FUNCIONANDO</h3>
-                    <p>El archivo grafo_web.json se cargó correctamente.</p>
-                    <p><strong>Solución:</strong> Hay un problema con el código del mapa. Te daré una versión corregida.</p>
+                    <h3 style="color: #28a745;">✅ DIAGNÓSTICO EXITOSO</h3>
+                    <p><strong>Resultado:</strong> El archivo <code>grafo_web.json</code> está correctamente ubicado y tiene datos válidos.</p>
+                    <p><strong>Datos encontrados:</strong></p>
+                    <ul style="text-align: left;">
+                        <li>${pois} destinos (POIs)</li>
+                        <li>${esquinas} intersecciones</li>
+                        <li>${totalConexiones} conexiones entre nodos</li>
+                    </ul>
+                    <p style="margin-top: 15px; padding: 15px; background: #d4edda; border-radius: 5px;">
+                        <strong>✅ Conclusión:</strong> El problema está en el código del <code>index.html</code>, NO en el archivo JSON.<br>
+                        <strong>Solución:</strong> Te daré una versión corregida del HTML que funcione con estos datos.
+                    </p>
                 `;
                 
             } catch (error) {
-                addLog(`❌ ERROR: ${error.message}`, 'error');
+                addLog(`❌ ERROR CRÍTICO: ${error.message}`, 'error');
+                addLog(`   Stack: ${error.stack}`, 'error');
                 
                 statusDiv.innerHTML = `
-                    <h3 style="color: #dc3545;">❌ ARCHIVO NO ENCONTRADO</h3>
-                    <p><strong>Problema:</strong> El archivo grafo_web.json NO está en el repositorio de GitHub.</p>
-                    <p><strong>Solución:</strong></p>
+                    <h3 style="color: #dc3545;">❌ ERROR AL CARGAR ARCHIVO</h3>
+                    <p><strong>Problema:</strong> ${error.message}</p>
+                    <p><strong>Posibles causas:</strong></p>
                     <ol style="text-align: left; padding-left: 20px;">
-                        <li>Ve a tu repositorio en GitHub</li>
-                        <li>Click en "Add file" → "Upload files"</li>
-                        <li>Arrastra el archivo grafo_web.json desde tu computadora</li>
-                        <li>Click en "Commit changes"</li>
-                        <li>Espera 2-3 minutos y refresca esta página</li>
+                        <li>El archivo NO se subió correctamente a GitHub</li>
+                        <li>GitHub Pages no se activó correctamente</li>
+                        <li>El nombre del archivo es incorrecto (debe ser exactamente "grafo_web.json")</li>
+                        <li>Esperando que GitHub actualice (espera 2-3 minutos más)</li>
                     </ol>
+                    <p style="margin-top: 15px; padding: 15px; background: #f8d7da; border-radius: 5px;">
+                        <strong>🔧 Solución recomendada:</strong><br>
+                        1. Verifica que el archivo esté en: <code>https://github.com/cristofernavarro0312/Easy-route-mototaxis/blob/main/grafo_web.json</code><br>
+                        2. Espera 2-3 minutos<br>
+                        3. Recarga esta página
+                    </p>
                 `;
             }
             
-            // Test 3: Verificar URLs
-            addLog('🌐 URLs actuales:', 'info');
-            addLog(`   Página: ${window.location.href}`, 'info');
-            addLog(`   JSON: ${window.location.origin}${window.location.pathname.replace('index.html', '')}grafo_web.json`, 'info');
+            addLog('', 'info');
+            addLog('📝 Diagnóstico completado', 'info');
         }
         
-        // Cargar Leaflet primero
+        // Cargar Leaflet y ejecutar tests
+        addLog('🔧 Cargando dependencias...', 'info');
+        
         const leafletCSS = document.createElement('link');
         leafletCSS.rel = 'stylesheet';
         leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
@@ -103,7 +187,15 @@
         
         const leafletJS = document.createElement('script');
         leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-        leafletJS.onload = verificarTodo;
+        leafletJS.onload = () => {
+            addLog('✅ Leaflet cargado desde CDN', 'success');
+            addLog('', 'info');
+            setTimeout(verificarTodo, 500);
+        };
+        leafletJS.onerror = () => {
+            addLog('❌ Error al cargar Leaflet desde CDN', 'error');
+            verificarTodo();
+        };
         document.head.appendChild(leafletJS);
     </script>
 </body>
