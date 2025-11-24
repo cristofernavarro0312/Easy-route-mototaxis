@@ -780,59 +780,38 @@
             capasRuta.forEach(capa => map.removeLayer(capa));
             capasRuta = [];
             
-            // Dibujar segmentos de la ruta
-            for (let i = 0; i < ruta.length - 1; i++) {
-                const coord1 = [nodos[ruta[i]].lat, nodos[ruta[i]].lon];
-                const coord2 = [nodos[ruta[i+1]].lat, nodos[ruta[i+1]].lon];
-                
-                const linea = L.polyline([coord1, coord2], {
-                    color: '#e74c3c',
-                    weight: 4,
-                    opacity: 0.8
-                }).addTo(map);
-                
-                capasRuta.push(linea);
-            }
+            // ANIMACIÓN: Dibujar con efecto de movimiento
+            const coordenadas = ruta.map(id => [nodos[id].lat, nodos[id].lon]);
             
-            // Ajustar vista
-            const puntos = ruta.map(id => [nodos[id].lat, nodos[id].lon]);
-            map.fitBounds(puntos, { padding: [50, 50] });
-            
-            // Marcador de inicio
-            const markerInicio = L.marker([nodos[ruta[0]].lat, nodos[ruta[0]].lon], {
-                icon: L.divIcon({
-                    html: '<div style="background: #27ae60; color: white; padding: 6px 10px; border-radius: 5px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🏁 INICIO</div>',
-                    iconSize: [80, 30],
-                    iconAnchor: [40, 30]
-                })
+            // Crear la polyline completa de una vez (esto respeta todas las esquinas)
+            const lineaCompleta = L.polyline(coordenadas, {
+                color: '#e74c3c',
+                weight: 6,
+                opacity: 0.7,
+                lineJoin: 'round',
+                lineCap: 'round'
             }).addTo(map);
-            capasRuta.push(markerInicio);
+            capasRuta.push(lineaCompleta);
             
-            // Marcador de fin
-            const markerFin = L.marker([nodos[ruta[ruta.length-1]].lat, nodos[ruta[ruta.length-1]].lon], {
-                icon: L.divIcon({
-                    html: '<div style="background: #e74c3c; color: white; padding: 6px 10px; border-radius: 5px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🎯 DESTINO</div>',
-                    iconSize: [100, 30],
-                    iconAnchor: [50, 30]
-                })
+            // Línea decorativa encima (efecto de "brillo")
+            const lineaDecorativa = L.polyline(coordenadas, {
+                color: '#ffffff',
+                weight: 2,
+                opacity: 0.6,
+                dashArray: '10, 10',
+                dashOffset: '0'
             }).addTo(map);
-            capasRuta.push(markerFin);
+            capasRuta.push(lineaDecorativa);
             
-            // Resaltar esquinas intermedias en la ruta
-            ruta.forEach((id, index) => {
-                if (index > 0 && index < ruta.length - 1 && nodos[id].tipo === 'esquina') {
-                    const marker = L.circleMarker([nodos[id].lat, nodos[id].lon], {
-                        radius: 5,
-                        fillColor: '#f39c12',
-                        color: '#fff',
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.9
-                    }).addTo(map);
-                    capasRuta.push(marker);
-                }
-            });
-        }
+            // Animar el dash offset para simular movimiento
+            let offset = 0;
+            const animarDash = setInterval(() => {
+                offset += 2;
+                lineaDecorativa.setStyle({ dashOffset: offset.toString() });
+            }, 100);
+            
+            // Detener animación después de 10 segundos
+            setTimeout(() => clearInterval(animarDash), 10000);
         
         // Iniciar cuando la página cargue
         window.addEventListener('load', function() {
