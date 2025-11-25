@@ -209,7 +209,7 @@
         }
         
         function inicializarMapa() {
-            map = L.map('map').setView([-11.8550, -77.0670], 13);
+            map = L.map('map').setView([-11.8550, -77.0670], 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap',
                 maxZoom: 19
@@ -217,12 +217,27 @@
             
             map.on('click', e => { if (modoReporte) reportarTrafico(e.latlng); });
             
+            // ✅ CORRECCIÓN: Dibujar calles con geometría completa
             for (let nodo1 in grafo) {
                 for (let nodo2 in grafo[nodo1]) {
-                    L.polyline(
-                        [[nodos[nodo1].lat, nodos[nodo1].lon], [nodos[nodo2].lat, nodos[nodo2].lon]],
-                        { color: '#bdc3c7', weight: 1, opacity: 0.3 }
-                    ).addTo(map);
+                    const arista = grafo[nodo1][nodo2];
+                    
+                    // Si tiene geometría, usarla; sino, línea recta
+                    let coords;
+                    if (arista.geometria && arista.geometria.length > 0) {
+                        coords = arista.geometria;
+                    } else {
+                        coords = [
+                            [nodos[nodo1].lat, nodos[nodo1].lon],
+                            [nodos[nodo2].lat, nodos[nodo2].lon]
+                        ];
+                    }
+                    
+                    L.polyline(coords, {
+                        color: '#bdc3c7',
+                        weight: 2,
+                        opacity: 0.4
+                    }).addTo(map);
                 }
             }
             
@@ -232,8 +247,8 @@
                 const nodo = nodos[id];
                 if (nodo.tipo === 'esquina') {
                     L.circleMarker([nodo.lat, nodo.lon], {
-                        radius: 2, fillColor: '#95a5a6', color: '#fff',
-                        weight: 1, opacity: 0.5, fillOpacity: 0.5
+                        radius: 3, fillColor: '#95a5a6', color: '#fff',
+                        weight: 1, opacity: 0.6, fillOpacity: 0.6
                     }).addTo(map);
                 } else if (nodo.tipo === 'poi') {
                     const marker = L.circleMarker([nodo.lat, nodo.lon], {
@@ -376,7 +391,7 @@
             else if (esq > 20) tip = "🚦 Muchas esquinas. Precaución.";
             
             document.getElementById('tiempo').textContent = `${tiempo.toFixed(1)} min`;
-            document.getElementById('distancia').textContent = `${distTotal} m`;
+            document.getElementById('distancia').textContent = `${distTotal.toFixed(0)} m`;
             document.getElementById('tarifa').textContent = `S/ ${tTotal.toFixed(2)}`;
             document.getElementById('pasos').textContent = ruta.length;
             document.getElementById('esquinas').textContent = esq;
@@ -392,17 +407,41 @@
             capasRuta.forEach(c => map.removeLayer(c));
             capasRuta = [];
             
-            // ✅ CORRECCIÓN: Polyline continua que respeta TODAS las esquinas
-            const coords = ruta.map(id => [nodos[id].lat, nodos[id].lon]);
+            // ✅ CORRECCIÓN: Recolectar geometría completa de todos los segmentos
+            let coordsCompletas = [];
             
-            const lineaPrincipal = L.polyline(coords, {
-                color: '#e74c3c', weight: 6, opacity: 0.7,
+            for (let i = 0; i < ruta.length - 1; i++) {
+                const origen = ruta[i];
+                const destino = ruta[i + 1];
+                
+                if (grafo[origen] && grafo[origen][destino]) {
+                    const arista = grafo[origen][destino];
+                    
+                    if (arista.geometria && arista.geometria.length > 0) {
+                        // Usar geometría de la arista
+                        if (i === 0) {
+                            coordsCompletas.push(...arista.geometria);
+                        } else {
+                            // Omitir primer punto (ya está)
+                            coordsCompletas.push(...arista.geometria.slice(1));
+                        }
+                    } else {
+                        // Fallback: línea recta
+                        const coord = [nodos[destino].lat, nodos[destino].lon];
+                        coordsCompletas.push(coord);
+                    }
+                }
+            }
+            
+            // Dibujar polyline con geometría completa
+            const lineaPrincipal = L.polyline(coordsCompletas, {
+                color: '#e74c3c', weight: 6, opacity: 0.8,
                 lineJoin: 'round', lineCap: 'round'
             }).addTo(map);
             capasRuta.push(lineaPrincipal);
             
-            const lineaDeco = L.polyline(coords, {
-                color: '#ffffff', weight: 2, opacity: 0.6,
+            const lineaDeco = L.polyline(coordsCompletas, {
+                color: '#ffffff', weight: 2, opacity: 0.7,
                 dashArray: '10, 10', dashOffset: '0'
             }).addTo(map);
             capasRuta.push(lineaDeco);
@@ -414,7 +453,7 @@
             }, 100);
             setTimeout(() => clearInterval(anim), 10000);
             
-            map.fitBounds(coords, { padding: [50, 50] });
+            map.fitBounds(coordsCompletas, { padding: [50, 50] });
             
             const inicio = L.marker([nodos[ruta[0]].lat, nodos[ruta[0]].lon], {
                 icon: L.divIcon({
