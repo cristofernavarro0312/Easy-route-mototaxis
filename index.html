@@ -3,152 +3,287 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Easy Route - Sistema de Rutas Mototaxis</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <title>Easy Route PRO - Sistema Inteligente</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 10px;
         }
-        .header { background: white; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header-content { max-width: 1400px; margin: 0 auto; }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+        
         h1 { color: #667eea; font-size: 1.8em; margin-bottom: 5px; }
+        .badge { display: inline-block; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.7em; margin-left: 10px; font-weight: 600; }
         .subtitle { color: #666; font-size: 0.95em; }
-        .container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
-        .main-grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
-        .control-panel {
-            background: white; border-radius: 15px; padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); height: fit-content;
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        .main-grid { display: grid; grid-template-columns: 400px 1fr; gap: 15px; }
+        
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
         }
-        .map-container {
-            background: white; border-radius: 15px; overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative;
-        }
-        #map { height: 650px; width: 100%; }
+        
+        .map-container { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; }
+        #map { height: 700px; width: 100%; }
+        
         .section-title { font-size: 1.3em; color: #667eea; margin-bottom: 20px; font-weight: 600; }
-        .form-group { margin-bottom: 20px; }
+        .form-group { margin-bottom: 18px; }
         label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; font-size: 0.95em; }
+        
         select {
-            width: 100%; padding: 12px; border: 2px solid #e0e0e0;
-            border-radius: 8px; font-size: 1em; transition: all 0.3s;
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+            background: white;
         }
-        select:focus {
-            outline: none; border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
         }
-        .btn-calculate {
-            width: 100%; padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; border: none; border-radius: 8px;
-            font-size: 1.1em; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
+        
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #e67e22; }
+        .btn-warning.active { background: #27ae60; animation: pulse 1.5s infinite; }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
         }
-        .btn-calculate:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
-        .results { margin-top: 25px; display: none; }
+        
+        .checkbox-group { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .checkbox-label { display: flex; align-items: center; font-size: 0.9em; cursor: pointer; margin-bottom: 10px; padding: 8px; border-radius: 6px; transition: background 0.2s; }
+        .checkbox-label:hover { background: #e9ecef; }
+        .checkbox-label input { margin-right: 10px; }
+        
+        .info-box {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 12px 0;
+            font-size: 0.9em;
+            display: none;
+            border-left: 4px solid;
+        }
+        .info-box.show { display: block; animation: slideIn 0.3s ease; }
+        .info-box.warning { background: #fff3cd; border-color: #ffc107; }
+        .info-box.success { background: #d4edda; border-color: #28a745; }
+        .info-box.info { background: #d1ecf1; border-color: #17a2b8; }
+        .info-box.danger { background: #f8d7da; border-color: #dc3545; }
+        
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .results { margin-top: 20px; display: none; }
         .results.show { display: block; animation: slideIn 0.3s ease; }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        
         .result-card {
-            background: #f8f9fa; padding: 15px; border-radius: 8px;
-            margin-bottom: 12px; border-left: 4px solid #667eea;
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
         }
         .result-label { font-size: 0.85em; color: #666; margin-bottom: 5px; }
-        .result-value { font-size: 1.3em; font-weight: 600; color: #333; }
+        .result-value { font-size: 1.5em; font-weight: 700; color: #333; }
+        
         .ruta-info {
-            background: white; padding: 15px; border-radius: 8px; margin-top: 15px;
-            border: 2px solid #e0e0e0; max-height: 300px; overflow-y: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid #e0e0e0;
         }
-        .ruta-stat {
-            display: flex; justify-content: space-between;
-            padding: 8px 0; border-bottom: 1px solid #f0f0f0;
+        .ruta-stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9em; }
+        
+        .alternatives {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
         }
+        .alternatives.show { display: block; }
+        .alternatives-title { font-size: 1.1em; font-weight: 600; color: #333; margin-bottom: 15px; }
+        
+        .route-option {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .route-option:hover { border-color: #667eea; transform: translateX(5px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+        .route-option.selected { border-color: #667eea; background: #f0f4ff; }
+        .route-option.best { border-color: #28a745; background: #d4edda; }
+        
+        .route-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .route-name { font-weight: 600; color: #333; font-size: 0.95em; }
+        
+        .route-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            color: white;
+        }
+        .route-badge.optimal { background: #28a745; }
+        .route-badge.alternative { background: #ff9800; }
+        .route-badge.slow { background: #dc3545; }
+        
+        .route-stats { display: flex; gap: 15px; font-size: 0.85em; color: #666; flex-wrap: wrap; }
+        .route-stats div { display: flex; align-items: center; gap: 5px; }
+        
+        .route-comparison {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #dee2e6;
+            font-size: 0.8em;
+            color: #666;
+        }
+        .comparison-good { color: #28a745; font-weight: 600; }
+        .comparison-bad { color: #dc3545; font-weight: 600; }
+        
+        .traffic-analysis {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            display: none;
+        }
+        .traffic-analysis.show { display: block; animation: slideIn 0.3s ease; }
+        .traffic-analysis h4 { color: #ff9800; margin-bottom: 10px; font-size: 1.1em; }
+        .traffic-analysis p { margin: 5px 0; line-height: 1.6; }
+        .traffic-analysis strong { color: #e67e22; }
+        
         .legend {
-            position: absolute; bottom: 20px; right: 20px; background: white;
-            padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1000; font-size: 0.85em;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-size: 0.85em;
         }
-        .legend-title { font-weight: 600; margin-bottom: 10px; }
-        .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 6px; }
         .legend-color { width: 20px; height: 20px; border-radius: 50%; margin-right: 8px; }
+        
+        @media (max-width: 968px) {
+            .main-grid { grid-template-columns: 1fr; }
+            #map { height: 400px; }
+            h1 { font-size: 1.4em; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
-            <h1>🛵 Easy Route - Sistema de Optimización de Rutas</h1>
-            <p class="subtitle">Sistematización del Flujo de Mototaxistas - Puente Piedra y Carabayllo, Lima</p>
-        </div>
+        <h1>🛵 Easy Route PRO <span class="badge">v2.1 Mejorado</span></h1>
+        <p class="subtitle">Sistema Inteligente con Análisis de Tráfico y Rutas Alternativas - Puente Piedra y Carabayllo</p>
     </div>
     
     <div class="container">
         <div class="main-grid">
-            <div class="control-panel">
-                <h2 class="section-title">📍 Planificar Ruta</h2>
+            <div class="panel">
+                <h2 class="section-title">📍 Planificar Viaje</h2>
                 
                 <div class="form-group">
-                    <label for="origen">🟢 Punto de Origen</label>
+                    <label>🟢 Punto de Origen</label>
                     <select id="origen"><option value="">-- Seleccione origen --</option></select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="destino">🔴 Punto de Destino</label>
+                    <label>🔴 Punto de Destino</label>
                     <select id="destino"><option value="">-- Seleccione destino --</option></select>
                 </div>
                 
-                <button class="btn-calculate" onclick="calcularRuta()">🔍 Calcular Ruta Óptima</button>
+                <button class="btn btn-primary" onclick="calcularRuta()">🚀 Calcular Ruta Óptima</button>
+                <button class="btn btn-warning" onclick="toggleReporte()" id="btn-report">🚨 Reportar Tráfico en Mapa</button>
                 
-                <button class="btn-calculate" onclick="toggleModoReporte()" id="btn-reporte"
-                        style="background: #f39c12; margin-top: 10px;">
-                    🚨 Activar Modo Reporte de Tráfico
-                </button>
-                
-                <div style="margin-top: 15px;">
-                    <label style="display: flex; align-items: center; font-size: 0.9em; cursor: pointer;">
-                        <input type="checkbox" id="modo_seguro" style="margin-right: 8px;">
-                        🛡️ Modo Calles Seguras
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="evitar_trafico" checked>
+                        🚦 Evitar Zonas con Tráfico Reportado
                     </label>
-                    <label style="display: flex; align-items: center; font-size: 0.9em; cursor: pointer; margin-top: 8px;">
-                        <input type="checkbox" id="evitar_congestion" style="margin-right: 8px;" checked>
-                        🚦 Evitar Zonas con Tráfico
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="modo_seguro">
+                        🛡️ Modo Seguro (calles principales iluminadas)
                     </label>
                 </div>
                 
-                <div id="info-reporte" style="display: none; background: #fff3cd; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 0.9em;">
-                    <strong>🚨 Modo Reporte Activo</strong><br>Haz click en el mapa donde hay tráfico
-                </div>
+                <div id="info-report" class="info-box warning"></div>
+                <div id="traffic-analysis" class="traffic-analysis"></div>
+                
+                <div id="alternatives" class="alternatives"></div>
                 
                 <div id="results" class="results">
                     <div class="result-card">
                         <div class="result-label">⏱️ Tiempo Estimado</div>
-                        <div class="result-value" id="tiempo">-- min</div>
+                        <div class="result-value" id="tiempo">--</div>
                     </div>
+                    
                     <div class="result-card">
                         <div class="result-label">📏 Distancia Total</div>
-                        <div class="result-value" id="distancia">-- m</div>
+                        <div class="result-value" id="distancia">--</div>
                     </div>
+                    
                     <div class="result-card">
                         <div class="result-label">💵 Tarifa Estimada</div>
-                        <div class="result-value" id="tarifa">S/ --</div>
+                        <div class="result-value" id="tarifa">--</div>
                     </div>
+                    
                     <div class="ruta-info">
-                        <div class="ruta-stat"><span>📊 Total de pasos:</span><strong id="pasos">--</strong></div>
-                        <div class="ruta-stat"><span>🚦 Esquinas cruzadas:</span><strong id="esquinas">--</strong></div>
-                        <div class="ruta-stat"><span>⚡ Velocidad promedio:</span><strong id="velocidad">-- km/h</strong></div>
-                        <div class="ruta-stat" style="border-top: 2px solid #e0e0e0; padding-top: 10px; margin-top: 10px;">
-                            <span>💡 Desglose de tarifa:</span>
-                            <div style="font-size: 0.85em; margin-top: 5px; color: #666;">
-                                <div>• Base: S/ 3.00</div>
-                                <div id="tarifa_detalle">• Por distancia: S/ --<br>• Por tiempo: S/ --</div>
-                            </div>
+                        <div class="ruta-stat">
+                            <span>📊 Pasos totales:</span>
+                            <strong id="pasos">--</strong>
                         </div>
-                    </div>
-                    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 0.9em;">
-                        <strong>💡 Tip del Conductor:</strong><br>
-                        <span id="tip_conductor">Calcula tu ruta para ver recomendaciones</span>
+                        <div class="ruta-stat">
+                            <span>🚦 Cruces:</span>
+                            <strong id="esquinas">--</strong>
+                        </div>
+                        <div class="ruta-stat">
+                            <span>⚡ Velocidad promedio:</span>
+                            <strong id="velocidad">-- km/h</strong>
+                        </div>
+                        <div class="ruta-stat">
+                            <span>💰 Desglose tarifa:</span>
+                            <div style="font-size: 0.9em; margin-top: 5px;" id="tarifa_detalle"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -156,60 +291,59 @@
             <div class="map-container">
                 <div id="map"></div>
                 <div class="legend">
-                    <div class="legend-title">Leyenda</div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #e74c3c;"></div><span>POIs (Destinos)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #95a5a6;"></div><span>Esquinas</span>
-                    </div>
-                    <div class="legend-item">
-                        <div style="width: 20px; height: 4px; background: red; margin-right: 8px;"></div>
-                        <span>Ruta calculada</span>
-                    </div>
+                    <div style="font-weight: 600; margin-bottom: 8px;">📌 Leyenda</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div><span>Destinos (POIs)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #95a5a6;"></div><span>Intersecciones</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #ffc107;"></div><span>Tráfico reportado</span></div>
+                    <div class="legend-item"><div style="width: 20px; height: 3px; background: #e74c3c; margin-right: 8px;"></div><span>Ruta óptima</span></div>
+                    <div class="legend-item"><div style="width: 20px; height: 3px; background: #3498db; margin-right: 8px; border: 2px dashed #3498db;"></div><span>Alternativa</span></div>
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        let map, nodos = {}, grafo = {}, todosLosMarcadores = [], capasRuta = [];
-        let reportesTraficoCapa = [], zonasConReportes = new Set(), modoReporte = false;
+        let map, nodos = {}, grafo = {}, zonasConReportes = new Set();
+        let modoReporte = false, capasRuta = [], reportesCapa = [];
+        let rutaActualData = null;
+        
+        window.addEventListener('load', cargarGrafo);
         
         async function cargarGrafo() {
             try {
                 const response = await fetch('grafo_web.json');
-                if (!response.ok) throw new Error('JSON no encontrado');
+                if (!response.ok) throw new Error('No se pudo cargar grafo_web.json');
                 const datos = await response.json();
                 nodos = datos.nodos;
                 grafo = datos.grafo;
+                
                 console.log(`✅ Grafo cargado: ${Object.keys(nodos).length} nodos`);
+                poblarSelectores();
+                inicializarMapa();
+                simularTrafico();
             } catch (error) {
-                alert('Error: No se pudo cargar grafo_web.json');
-                return;
+                console.error('❌ Error:', error);
+                alert('Error: Asegúrate de tener grafo_web.json en la misma carpeta');
             }
-            poblarSelectores();
-            inicializarMapa();
         }
         
         function poblarSelectores() {
             const selectOrigen = document.getElementById('origen');
             const selectDestino = document.getElementById('destino');
             const pois = Object.keys(nodos).filter(id => nodos[id].tipo === 'poi');
+            
             pois.forEach(id => {
-                const opt1 = document.createElement('option');
-                opt1.value = id;
-                opt1.textContent = nodos[id].nombre;
-                selectOrigen.appendChild(opt1);
-                const opt2 = document.createElement('option');
-                opt2.value = id;
-                opt2.textContent = nodos[id].nombre;
-                selectDestino.appendChild(opt2);
+                [selectOrigen, selectDestino].forEach(select => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = nodos[id].nombre;
+                    select.appendChild(option);
+                });
             });
         }
         
         function inicializarMapa() {
-            map = L.map('map').setView([-11.8550, -77.0670], 14);
+            map = L.map('map').setView([-11.8550, -77.0670], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap',
                 maxZoom: 19
@@ -217,277 +351,539 @@
             
             map.on('click', e => { if (modoReporte) reportarTrafico(e.latlng); });
             
-            // ✅ CORRECCIÓN: Dibujar calles con geometría completa
+            // Dibujar calles
             for (let nodo1 in grafo) {
                 for (let nodo2 in grafo[nodo1]) {
-                    const arista = grafo[nodo1][nodo2];
-                    
-                    // Si tiene geometría, usarla; sino, línea recta
-                    let coords;
-                    if (arista.geometria && arista.geometria.length > 0) {
-                        coords = arista.geometria;
-                    } else {
-                        coords = [
-                            [nodos[nodo1].lat, nodos[nodo1].lon],
-                            [nodos[nodo2].lat, nodos[nodo2].lon]
-                        ];
-                    }
-                    
-                    L.polyline(coords, {
-                        color: '#bdc3c7',
-                        weight: 2,
-                        opacity: 0.4
-                    }).addTo(map);
+                    const coord1 = [nodos[nodo1].lat, nodos[nodo1].lon];
+                    const coord2 = [nodos[nodo2].lat, nodos[nodo2].lon];
+                    L.polyline([coord1, coord2], { color: '#bdc3c7', weight: 1, opacity: 0.3 }).addTo(map);
                 }
             }
             
-            simularTraficoCongestionado();
-            
+            // Dibujar esquinas y POIs
             Object.keys(nodos).forEach(id => {
                 const nodo = nodos[id];
                 if (nodo.tipo === 'esquina') {
                     L.circleMarker([nodo.lat, nodo.lon], {
-                        radius: 3, fillColor: '#95a5a6', color: '#fff',
-                        weight: 1, opacity: 0.6, fillOpacity: 0.6
+                        radius: 2, fillColor: '#95a5a6', color: '#fff', weight: 1, opacity: 0.5, fillOpacity: 0.5
                     }).addTo(map);
                 } else if (nodo.tipo === 'poi') {
                     const marker = L.circleMarker([nodo.lat, nodo.lon], {
-                        radius: 8, fillColor: '#e74c3c', color: '#fff',
-                        weight: 2, opacity: 1, fillOpacity: 0.9
+                        radius: 8, fillColor: '#e74c3c', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9
                     }).addTo(map);
                     marker.bindPopup(`<b>${nodo.nombre}</b>`);
-                    todosLosMarcadores.push(marker);
                 }
             });
+            
             console.log('✅ Mapa inicializado');
         }
         
-        function simularTraficoCongestionado() {
-            const esquinas = Object.keys(nodos).filter(id => nodos[id].tipo === 'esquina');
-            const num = Math.floor(Math.random() * 20) + 20;
-            for (let i = 0; i < num; i++) {
-                zonasConReportes.add(esquinas[Math.floor(Math.random() * esquinas.length)]);
+        function simularTrafico() {
+            const intersecciones = Object.keys(nodos).filter(id => nodos[id].tipo === 'esquina');
+            const numReportes = Math.floor(Math.random() * 20) + 20;
+            
+            for (let i = 0; i < numReportes; i++) {
+                zonasConReportes.add(intersecciones[Math.floor(Math.random() * intersecciones.length)]);
             }
             actualizarVisualizacionReportes();
         }
         
-        function toggleModoReporte() {
+        function toggleReporte() {
             modoReporte = !modoReporte;
-            const btn = document.getElementById('btn-reporte');
-            const info = document.getElementById('info-reporte');
+            const btn = document.getElementById('btn-report');
+            const info = document.getElementById('info-report');
+            
             if (modoReporte) {
-                btn.textContent = '✅ Modo Reporte ACTIVO';
-                btn.style.background = '#27ae60';
-                info.style.display = 'block';
+                btn.textContent = '✅ Modo Reporte ACTIVO - Click en mapa';
+                btn.classList.add('active');
+                info.innerHTML = '<strong>🚨 Modo Reporte Activo</strong><br>Haz click en el mapa donde detectes tráfico. El sistema recalculará automáticamente.';
+                info.classList.add('show');
                 map.getContainer().style.cursor = 'crosshair';
             } else {
-                btn.textContent = '🚨 Activar Modo Reporte de Tráfico';
-                btn.style.background = '#f39c12';
-                info.style.display = 'none';
+                btn.textContent = '🚨 Reportar Tráfico en Mapa';
+                btn.classList.remove('active');
+                info.classList.remove('show');
                 map.getContainer().style.cursor = '';
             }
         }
         
         function reportarTrafico(latlng) {
             let minDist = Infinity, nodoMasCercano = null;
+            
             Object.keys(nodos).forEach(id => {
                 const nodo = nodos[id];
-                if (nodo.tipo === 'esquina') {
+                if (nodo.tipo === 'esquina' || nodo.tipo === 'interseccion') {
                     const dist = Math.sqrt(
-                        Math.pow((nodo.lat - latlng.lat) * 111000, 2) +
+                        Math.pow((nodo.lat - latlng.lat) * 111000, 2) + 
                         Math.pow((nodo.lon - latlng.lng) * 111000 * Math.cos(latlng.lat * Math.PI / 180), 2)
                     );
-                    if (dist < minDist) { minDist = dist; nodoMasCercano = id; }
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nodoMasCercano = id;
+                    }
                 }
             });
+            
             if (nodoMasCercano && minDist < 500) {
                 zonasConReportes.add(nodoMasCercano);
                 actualizarVisualizacionReportes();
-                L.popup().setLatLng([nodos[nodoMasCercano].lat, nodos[nodoMasCercano].lon])
-                    .setContent(`<div style="text-align: center;"><strong>🚨 Tráfico Reportado</strong><br><small>Radio: ${Math.round(minDist)}m</small></div>`)
+                
+                const nodo = nodos[nodoMasCercano];
+                L.popup()
+                    .setLatLng([nodo.lat, nodo.lon])
+                    .setContent(`
+                        <div style="text-align: center;">
+                            <strong>🚨 Tráfico Reportado</strong><br>
+                            <small>Radio: ${Math.round(minDist)}m</small><br>
+                            <small style="color: #27ae60;">✓ Analizando rutas alternativas...</small>
+                        </div>
+                    `)
                     .openOn(map);
-                const orig = document.getElementById('origen').value;
-                const dest = document.getElementById('destino').value;
-                if (orig && dest && orig !== dest) setTimeout(() => calcularRuta(), 1500);
+                
+                // Recalcular con análisis
+                const origenId = document.getElementById('origen').value;
+                const destinoId = document.getElementById('destino').value;
+                if (origenId && destinoId && origenId !== destinoId) {
+                    setTimeout(() => calcularRutaConAnalisis(), 1500);
+                }
+            } else {
+                L.popup()
+                    .setLatLng(latlng)
+                    .setContent(`<div style="text-align: center; color: #e74c3c;"><strong>⚠️ Muy lejos de calles</strong><br><small>Haz click más cerca</small></div>`)
+                    .openOn(map);
             }
         }
         
         function actualizarVisualizacionReportes() {
-            reportesTraficoCapa.forEach(c => map.removeLayer(c));
-            reportesTraficoCapa = [];
-            zonasConReportes.forEach(id => {
-                if (nodos[id]) {
-                    const c = L.circleMarker([nodos[id].lat, nodos[id].lon], {
-                        radius: 10, fillColor: '#ffc107', color: '#ff9800',
-                        weight: 3, opacity: 1, fillOpacity: 0.8
+            reportesCapa.forEach(capa => map.removeLayer(capa));
+            reportesCapa = [];
+            
+            zonasConReportes.forEach(nodoId => {
+                if (nodos[nodoId]) {
+                    const circuloGrande = L.circle([nodos[nodoId].lat, nodos[nodoId].lon], {
+                        radius: 80, fillColor: '#ffc107', color: '#ff9800', weight: 2, opacity: 0.7, fillOpacity: 0.3
                     }).addTo(map);
-                    reportesTraficoCapa.push(c);
+                    
+                    const circulo = L.circleMarker([nodos[nodoId].lat, nodos[nodoId].lon], {
+                        radius: 10, fillColor: '#ffc107', color: '#ff9800', weight: 3, opacity: 1, fillOpacity: 0.8
+                    }).addTo(map);
+                    
+                    circulo.bindPopup(`
+                        <div style="text-align: center;">
+                            <strong>🚦 Zona con Tráfico</strong><br>
+                            <small>Reportado por la comunidad</small><br>
+                            <button onclick="eliminarReporte('${nodoId}')" style="margin-top:5px; padding:3px 8px; background:#e74c3c; color:white; border:none; border-radius:3px; cursor:pointer;">
+                                ❌ Quitar reporte
+                            </button>
+                        </div>
+                    `);
+                    
+                    reportesCapa.push(circulo, circuloGrande);
                 }
             });
         }
         
-        function dijkstra(origen, destino) {
-            const dist = {}, prev = {}, vis = new Set(), pend = new Set(Object.keys(nodos));
-            const seguro = document.getElementById('modo_seguro')?.checked || false;
-            const evitar = document.getElementById('evitar_congestion')?.checked || false;
+        window.eliminarReporte = function(nodoId) {
+            zonasConReportes.delete(nodoId);
+            actualizarVisualizacionReportes();
+            map.closePopup();
             
-            for (let n of pend) { dist[n] = Infinity; prev[n] = null; }
-            dist[origen] = 0;
+            const origenId = document.getElementById('origen').value;
+            const destinoId = document.getElementById('destino').value;
+            if (origenId && destinoId && origenId !== destinoId) {
+                setTimeout(() => calcularRutaConAnalisis(), 500);
+            }
+        };
+        
+        function dijkstra(origen, destino, evitarTrafico = true) {
+            const distancias = {}, previos = {};
+            const visitados = new Set();
+            const todosNodos = Object.keys(nodos);
+            const pendientes = new Set(todosNodos);
             
-            while (pend.size > 0) {
-                let act = null, menorD = Infinity;
-                for (let n of pend) if (dist[n] < menorD) { menorD = dist[n]; act = n; }
-                if (act === null || menorD === Infinity) break;
-                if (act === destino) break;
-                pend.delete(act);
+            const modoSeguro = document.getElementById('modo_seguro')?.checked || false;
+            const evitarCongestion = evitarTrafico && document.getElementById('evitar_trafico')?.checked;
+            
+            for (let nodo of todosNodos) {
+                distancias[nodo] = Infinity;
+                previos[nodo] = null;
+            }
+            distancias[origen] = 0;
+            
+            while (pendientes.size > 0) {
+                let actual = null, menorDist = Infinity;
                 
-                if (grafo[act]) {
-                    for (let vec in grafo[act]) {
-                        if (!vis.has(vec)) {
-                            let t = grafo[act][vec].tiempo;
-                            if (seguro && nodos[vec].tipo === 'esquina') {
-                                const numV = Object.keys(grafo[vec] || {}).length;
-                                if (numV <= 2) t *= 1.5;
+                for (let nodo of pendientes) {
+                    if (distancias[nodo] < menorDist) {
+                        menorDist = distancias[nodo];
+                        actual = nodo;
+                    }
+                }
+                
+                if (actual === null || menorDist === Infinity) break;
+                if (actual === destino) break;
+                
+                pendientes.delete(actual);
+                
+                if (grafo[actual]) {
+                    for (let vecino in grafo[actual]) {
+                        if (!visitados.has(vecino)) {
+                            let tiempoBase = grafo[actual][vecino].tiempo;
+                            
+                            if (modoSeguro && nodos[vecino].tipo === 'esquina') {
+                                const numVecinos = Object.keys(grafo[vecino] || {}).length;
+                                if (numVecinos <= 2) tiempoBase *= 1.5;
                             }
-                            if (evitar && zonasConReportes.has(vec)) t *= 3.0;
-                            const newD = dist[act] + t;
-                            if (newD < dist[vec]) { dist[vec] = newD; prev[vec] = act; }
+                            
+                            if (evitarCongestion && zonasConReportes.has(vecino)) {
+                                tiempoBase *= 3.0; // Penalización por tráfico
+                            }
+                            
+                            const nuevaDist = distancias[actual] + tiempoBase;
+                            if (nuevaDist < distancias[vecino]) {
+                                distancias[vecino] = nuevaDist;
+                                previos[vecino] = actual;
+                            }
                         }
                     }
                 }
-                vis.add(act);
+                visitados.add(actual);
             }
             
             const ruta = [];
-            let a = destino;
-            while (a !== null) { ruta.unshift(a); a = prev[a]; }
-            return { ruta, tiempo: dist[destino] };
+            let actual = destino;
+            while (actual !== null) {
+                ruta.unshift(actual);
+                actual = previos[actual];
+            }
+            
+            return { ruta, tiempo: distancias[destino] };
+        }
+        
+        function calcularRutaConAnalisis() {
+            const origenId = document.getElementById('origen').value;
+            const destinoId = document.getElementById('destino').value;
+            
+            if (!origenId || !destinoId) {
+                alert('Seleccione origen y destino');
+                return;
+            }
+            
+            if (origenId === destinoId) {
+                alert('El origen y destino deben ser diferentes');
+                return;
+            }
+            
+            // Calcular 3 rutas: óptima SIN tráfico, óptima CON tráfico, y alternativa
+            const rutaSinTrafico = dijkstra(origenId, destinoId, false);
+            const rutaConTrafico = dijkstra(origenId, destinoId, true);
+            
+            // Calcular distancias reales
+            function calcularDistanciaRuta(ruta) {
+                let dist = 0;
+                for (let i = 0; i < ruta.length - 1; i++) {
+                    if (grafo[ruta[i]] && grafo[ruta[i]][ruta[i + 1]]) {
+                        dist += grafo[ruta[i]][ruta[i + 1]].dist;
+                    }
+                }
+                return dist;
+            }
+            
+            const distSinTrafico = calcularDistanciaRuta(rutaSinTrafico.ruta);
+            const distConTrafico = calcularDistanciaRuta(rutaConTrafico.ruta);
+            
+            // ANÁLISIS INTELIGENTE
+            const diferenciaTiempo = rutaConTrafico.tiempo - rutaSinTrafico.tiempo;
+            const diferenciaDistancia = distConTrafico - distSinTrafico;
+            const ahorro = rutaSinTrafico.tiempo - rutaConTrafico.tiempo;
+            
+            const analysisDiv = document.getElementById('traffic-analysis');
+            
+            // Determinar si vale la pena redirigir
+            let analisisHTML = '<h4>🔍 Análisis de Tráfico</h4>';
+            
+            if (ahorro > 2) {
+                // SÍ VALE LA PENA redirigir
+                analisisHTML += `
+                    <p><strong>✅ RECOMENDACIÓN: Usar ruta alternativa</strong></p>
+                    <p>📊 <strong>Ahorro estimado:</strong> ${ahorro.toFixed(1)} minutos</p>
+                    <p>📏 Distancia extra: ${(diferenciaDistancia / 1000).toFixed(2)} km</p>
+                    <p>💡 <strong>Razón:</strong> La ruta alterna evita ${Array.from(zonasConReportes).filter(z => rutaSinTrafico.ruta.includes(z)).length} zona(s) congestionadas y te ahorra tiempo significativo.</p>
+                `;
+                rutaActualData = rutaConTrafico;
+            } else if (ahorro > 0) {
+                // Ahorro MARGINAL
+                analisisHTML += `
+                    <p><strong>⚠️ Ahorro marginal detectado</strong></p>
+                    <p>📊 Ahorro: ${ahorro.toFixed(1)} minutos</p>
+                    <p>📏 Distancia extra: ${(diferenciaDistancia / 1000).toFixed(2)} km</p>
+                    <p>💡 <strong>Análisis:</strong> La ruta alterna solo ahorra un poco de tiempo. Puedes seguir la ruta original si prefieres el camino más corto.</p>
+                `;
+                rutaActualData = rutaConTrafico;
+            } else {
+                // NO VALE LA PENA redirigir
+                const tiempoExtra = Math.abs(ahorro);
+                analisisHTML += `
+                    <p><strong>❌ NO se recomienda redirigir</strong></p>
+                    <p>📊 Ruta alterna sería: <span style="color: #dc3545;">+${tiempoExtra.toFixed(1)} min más lenta</span></p>
+                    <p>📏 Distancia extra: ${(diferenciaDistancia / 1000).toFixed(2)} km</p>
+                    <p>💡 <strong>Razón:</strong> Aunque hay tráfico reportado, todas las rutas alternas disponibles son MÁS LENTAS. Es mejor aguantar el tráfico en la ruta original.</p>
+                    <p>🚦 <strong>Consejo:</strong> El tráfico es temporal. Avanza por la ruta más corta.</p>
+                `;
+                rutaActualData = rutaSinTrafico; // Usar ruta original
+            }
+            
+            analysisDiv.innerHTML = analisisHTML;
+            analysisDiv.classList.add('show');
+            
+            // Mostrar rutas alternativas comparadas
+            mostrarRutasAlternativas([
+                { nombre: 'Ruta Óptima SIN tráfico', ruta: rutaSinTrafico.ruta, tiempo: rutaSinTrafico.tiempo, dist: distSinTrafico, tipo: 'original' },
+                { nombre: 'Ruta Evitando Tráfico', ruta: rutaConTrafico.ruta, tiempo: rutaConTrafico.tiempo, dist: distConTrafico, tipo: 'alternate' }
+            ]);
+            
+            // Mostrar resultados de la ruta seleccionada
+            mostrarResultados(rutaActualData, origenId, destinoId);
+            dibujarRuta(rutaActualData.ruta);
         }
         
         function calcularRuta() {
-            const orig = document.getElementById('origen').value;
-            const dest = document.getElementById('destino').value;
-            if (!orig || !dest) { alert('Seleccione origen y destino'); return; }
-            if (orig === dest) { alert('Origen y destino deben ser diferentes'); return; }
+            const origenId = document.getElementById('origen').value;
+            const destinoId = document.getElementById('destino').value;
             
-            const { ruta, tiempo } = dijkstra(orig, dest);
-            if (ruta.length === 0 || tiempo === Infinity) { alert('No se encontró ruta'); return; }
-            
-            let distTotal = 0;
-            for (let i = 0; i < ruta.length - 1; i++) {
-                if (grafo[ruta[i]] && grafo[ruta[i]][ruta[i+1]]) {
-                    distTotal += grafo[ruta[i]][ruta[i+1]].dist;
-                }
+            if (!origenId || !destinoId) {
+                alert('Seleccione origen y destino');
+                return;
             }
             
-            const esq = ruta.filter(id => nodos[id].tipo === 'esquina').length;
-            const velProm = distTotal > 0 ? ((distTotal / 1000) / (tiempo / 60)).toFixed(1) : 0;
-            const tBase = 3.00, tDist = Math.min(5, (distTotal / 1000) * 2);
-            const tTime = Math.min(5, tiempo * 0.15), tTotal = tBase + tDist + tTime;
+            if (origenId === destinoId) {
+                alert('El origen y destino deben ser diferentes');
+                return;
+            }
             
-            let tip = "Ruta óptima.";
-            if (tiempo > 15) tip = "⚠️ Ruta larga. Considera parada intermedia.";
-            else if (distTotal < 500) tip = "✅ Ruta corta ideal.";
-            else if (esq > 20) tip = "🚦 Muchas esquinas. Precaución.";
+            // Calcular múltiples rutas para comparar
+            const rutaOptima = dijkstra(origenId, destinoId, true);
+            const rutaSinEvitar = dijkstra(origenId, destinoId, false);
             
-            document.getElementById('tiempo').textContent = `${tiempo.toFixed(1)} min`;
-            document.getElementById('distancia').textContent = `${distTotal.toFixed(0)} m`;
-            document.getElementById('tarifa').textContent = `S/ ${tTotal.toFixed(2)}`;
-            document.getElementById('pasos').textContent = ruta.length;
-            document.getElementById('esquinas').textContent = esq;
-            document.getElementById('velocidad').textContent = `${velProm} km/h`;
-            document.getElementById('tarifa_detalle').innerHTML = `• Por distancia: S/ ${tDist.toFixed(2)}<br>• Por tiempo: S/ ${tTime.toFixed(2)}`;
-            document.getElementById('tip_conductor').textContent = tip;
-            document.getElementById('results').classList.add('show');
+            if (rutaOptima.ruta.length === 0 || rutaOptima.tiempo === Infinity) {
+                alert('No se encontró una ruta entre estos puntos');
+                return;
+            }
             
-            dibujarRuta(ruta);
+            rutaActualData = rutaOptima;
+            mostrarResultados(rutaOptima, origenId, destinoId);
+            dibujarRuta(rutaOptima.ruta);
+            
+            // Preparar rutas alternativas
+            const rutasAlternativas = [];
+            
+            function calcularDistanciaRuta(ruta) {
+                let dist = 0;
+                for (let i = 0; i < ruta.length - 1; i++) {
+                    if (grafo[ruta[i]] && grafo[ruta[i]][ruta[i + 1]]) {
+                        dist += grafo[ruta[i]][ruta[i + 1]].dist;
+                    }
+                }
+                return dist;
+            }
+            
+            rutasAlternativas.push({
+                nombre: 'Ruta Óptima Actual',
+                ruta: rutaOptima.ruta,
+                tiempo: rutaOptima.tiempo,
+                dist: calcularDistanciaRuta(rutaOptima.ruta),
+                tipo: 'optimal'
+            });
+            
+            if (rutaSinEvitar.ruta.length > 0 && JSON.stringify(rutaSinEvitar.ruta) !== JSON.stringify(rutaOptima.ruta)) {
+                rutasAlternativas.push({
+                    nombre: 'Ruta Más Directa',
+                    ruta: rutaSinEvitar.ruta,
+                    tiempo: rutaSinEvitar.tiempo,
+                    dist: calcularDistanciaRuta(rutaSinEvitar.ruta),
+                    tipo: 'direct'
+                });
+            }
+            
+            mostrarRutasAlternativas(rutasAlternativas);
         }
         
-        function dibujarRuta(ruta) {
-            capasRuta.forEach(c => map.removeLayer(c));
-            capasRuta = [];
+        function mostrarRutasAlternativas(rutas) {
+            const altDiv = document.getElementById('alternatives');
             
-            // ✅ CORRECCIÓN: Recolectar geometría completa de todos los segmentos
-            let coordsCompletas = [];
+            if (rutas.length <= 1) {
+                altDiv.classList.remove('show');
+                return;
+            }
             
+            let html = '<div class="alternatives-title">🔀 Rutas Disponibles (Click para ver en mapa)</div>';
+            
+            rutas.sort((a, b) => a.tiempo - b.tiempo);
+            
+            rutas.forEach((r, index) => {
+                const tarifa = Math.max(3, Math.min(20, 3 + (r.dist / 1000) * 2 + r.tiempo * 0.15));
+                const velocidad = r.dist > 0 ? ((r.dist / 1000) / (r.tiempo / 60)).toFixed(1) : 0;
+                
+                let badge = '', className = 'route-option';
+                if (index === 0) {
+                    badge = '<span class="route-badge optimal">🏆 ÓPTIMA</span>';
+                    className += ' best';
+                } else if (r.tipo === 'direct') {
+                    badge = '<span class="route-badge alternative">🔷 MÁS DIRECTA</span>';
+                } else {
+                    badge = '<span class="route-badge alternative">🔶 ALTERNATIVA</span>';
+                }
+                
+                let comparison = '';
+                if (index > 0) {
+                    const diff = r.tiempo - rutas[0].tiempo;
+                    const diffDist = r.dist - rutas[0].dist;
+                    if (diff > 0) {
+                        comparison = `<div class="route-comparison">
+                            <span class="comparison-bad">+${diff.toFixed(1)} min más lenta</span> | 
+                            <span class="comparison-bad">+${(diffDist / 1000).toFixed(2)} km extra</span>
+                        </div>`;
+                    } else {
+                        comparison = `<div class="route-comparison">
+                            <span class="comparison-good">${diff.toFixed(1)} min más rápida</span>
+                        </div>`;
+                    }
+                }
+                
+                html += `
+                    <div class="${className}" onclick="seleccionarRuta(${index})" data-index="${index}">
+                        <div class="route-header">
+                            <div class="route-name">${r.nombre}</div>
+                            ${badge}
+                        </div>
+                        <div class="route-stats">
+                            <div>⏱️ ${r.tiempo.toFixed(1)} min</div>
+                            <div>📏 ${(r.dist / 1000).toFixed(2)} km</div>
+                            <div>💵 S/ ${tarifa.toFixed(2)}</div>
+                            <div>⚡ ${velocidad} km/h</div>
+                        </div>
+                        ${comparison}
+                    </div>
+                `;
+            });
+            
+            altDiv.innerHTML = html;
+            altDiv.classList.add('show');
+            
+            // Guardar rutas para selección
+            window.rutasDisponibles = rutas;
+        }
+        
+        window.seleccionarRuta = function(index) {
+            const ruta = window.rutasDisponibles[index];
+            if (!ruta) return;
+            
+            // Actualizar visual
+            document.querySelectorAll('.route-option').forEach((el, i) => {
+                if (i === index) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+            
+            // Dibujar ruta seleccionada
+            dibujarRuta(ruta.ruta, index === 0 ? '#e74c3c' : '#3498db');
+            
+            // Actualizar resultados
+            const origenId = document.getElementById('origen').value;
+            const destinoId = document.getElementById('destino').value;
+            mostrarResultados({ ruta: ruta.ruta, tiempo: ruta.tiempo }, origenId, destinoId);
+        };
+        
+        function mostrarResultados(resultado, origenId, destinoId) {
+            const ruta = resultado.ruta;
+            const tiempo = resultado.tiempo;
+            
+            let distanciaTotal = 0;
             for (let i = 0; i < ruta.length - 1; i++) {
                 const origen = ruta[i];
                 const destino = ruta[i + 1];
-                
                 if (grafo[origen] && grafo[origen][destino]) {
-                    const arista = grafo[origen][destino];
-                    
-                    if (arista.geometria && arista.geometria.length > 0) {
-                        // Usar geometría de la arista
-                        if (i === 0) {
-                            coordsCompletas.push(...arista.geometria);
-                        } else {
-                            // Omitir primer punto (ya está)
-                            coordsCompletas.push(...arista.geometria.slice(1));
-                        }
-                    } else {
-                        // Fallback: línea recta
-                        const coord = [nodos[destino].lat, nodos[destino].lon];
-                        coordsCompletas.push(coord);
-                    }
+                    distanciaTotal += grafo[origen][destino].dist;
                 }
             }
             
-            // Dibujar polyline con geometría completa
-            const lineaPrincipal = L.polyline(coordsCompletas, {
-                color: '#e74c3c', weight: 6, opacity: 0.8,
-                lineJoin: 'round', lineCap: 'round'
-            }).addTo(map);
-            capasRuta.push(lineaPrincipal);
+            const esquinasCruzadas = ruta.filter(id => nodos[id].tipo === 'esquina').length;
+            const velocidadPromedio = distanciaTotal > 0 ? ((distanciaTotal / 1000) / (tiempo / 60)).toFixed(1) : 0;
             
-            const lineaDeco = L.polyline(coordsCompletas, {
-                color: '#ffffff', weight: 2, opacity: 0.7,
-                dashArray: '10, 10', dashOffset: '0'
-            }).addTo(map);
-            capasRuta.push(lineaDeco);
+            const tarifaBase = 3.00;
+            const tarifaDistancia = Math.min(8, (distanciaTotal / 1000) * 2);
+            const tarifaTiempo = Math.min(5, tiempo * 0.15);
+            const tarifaTotal = tarifaBase + tarifaDistancia + tarifaTiempo;
             
-            let offset = 0;
-            const anim = setInterval(() => {
-                offset += 2;
-                lineaDeco.setStyle({ dashOffset: offset.toString() });
-            }, 100);
-            setTimeout(() => clearInterval(anim), 10000);
+            document.getElementById('tiempo').textContent = `${tiempo.toFixed(1)} min`;
+            document.getElementById('distancia').textContent = `${(distanciaTotal / 1000).toFixed(2)} km`;
+            document.getElementById('tarifa').textContent = `S/ ${tarifaTotal.toFixed(2)}`;
+            document.getElementById('pasos').textContent = ruta.length;
+            document.getElementById('esquinas').textContent = esquinasCruzadas;
+            document.getElementById('velocidad').textContent = `${velocidadPromedio} km/h`;
+            document.getElementById('tarifa_detalle').innerHTML = `
+                <div>• Base: S/ ${tarifaBase.toFixed(2)}</div>
+                <div>• Distancia: S/ ${tarifaDistancia.toFixed(2)}</div>
+                <div>• Tiempo: S/ ${tarifaTiempo.toFixed(2)}</div>
+            `;
             
-            map.fitBounds(coordsCompletas, { padding: [50, 50] });
+            document.getElementById('results').classList.add('show');
+        }
+        
+        function dibujarRuta(ruta, color = '#e74c3c') {
+            capasRuta.forEach(capa => map.removeLayer(capa));
+            capasRuta = [];
             
-            const inicio = L.marker([nodos[ruta[0]].lat, nodos[ruta[0]].lon], {
+            for (let i = 0; i < ruta.length - 1; i++) {
+                const coord1 = [nodos[ruta[i]].lat, nodos[ruta[i]].lon];
+                const coord2 = [nodos[ruta[i+1]].lat, nodos[ruta[i+1]].lon];
+                
+                const linea = L.polyline([coord1, coord2], {
+                    color: color,
+                    weight: 4,
+                    opacity: 0.8
+                }).addTo(map);
+                
+                capasRuta.push(linea);
+            }
+            
+            const puntos = ruta.map(id => [nodos[id].lat, nodos[id].lon]);
+            map.fitBounds(puntos, { padding: [50, 50] });
+            
+            const markerInicio = L.marker([nodos[ruta[0]].lat, nodos[ruta[0]].lon], {
                 icon: L.divIcon({
-                    html: '<div style="background: #27ae60; color: white; padding: 6px 10px; border-radius: 5px; font-weight: bold;">🏁 INICIO</div>',
-                    iconSize: [80, 30], iconAnchor: [40, 30]
+                    html: '<div style="background: #27ae60; color: white; padding: 6px 10px; border-radius: 5px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🚩 INICIO</div>',
+                    iconSize: [80, 30],
+                    iconAnchor: [40, 30]
                 })
             }).addTo(map);
-            capasRuta.push(inicio);
+            capasRuta.push(markerInicio);
             
-            const fin = L.marker([nodos[ruta[ruta.length-1]].lat, nodos[ruta[ruta.length-1]].lon], {
+            const markerFin = L.marker([nodos[ruta[ruta.length-1]].lat, nodos[ruta[ruta.length-1]].lon], {
                 icon: L.divIcon({
-                    html: '<div style="background: #e74c3c; color: white; padding: 6px 10px; border-radius: 5px; font-weight: bold;">🎯 DESTINO</div>',
-                    iconSize: [100, 30], iconAnchor: [50, 30]
+                    html: '<div style="background: #e74c3c; color: white; padding: 6px 10px; border-radius: 5px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🎯 DESTINO</div>',
+                    iconSize: [100, 30],
+                    iconAnchor: [50, 30]
                 })
             }).addTo(map);
-            capasRuta.push(fin);
+            capasRuta.push(markerFin);
             
-            ruta.forEach((id, idx) => {
-                if (idx > 0 && idx < ruta.length - 1 && nodos[id].tipo === 'esquina') {
-                    const m = L.circleMarker([nodos[id].lat, nodos[id].lon], {
-                        radius: 5, fillColor: '#f39c12', color: '#fff',
-                        weight: 2, opacity: 1, fillOpacity: 0.9
+            ruta.forEach((id, index) => {
+                if (index > 0 && index < ruta.length - 1 && nodos[id].tipo === 'esquina') {
+                    const marker = L.circleMarker([nodos[id].lat, nodos[id].lon], {
+                        radius: 5,
+                        fillColor: '#f39c12',
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
                     }).addTo(map);
-                    capasRuta.push(m);
+                    capasRuta.push(marker);
                 }
             });
         }
-        
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                if (typeof L !== 'undefined') cargarGrafo();
-                else alert('Error: No se pudo cargar Leaflet');
-            }, 100);
-        });
     </script>
 </body>
 </html>
